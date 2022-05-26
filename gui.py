@@ -1,5 +1,6 @@
 from time import sleep
 import pygame
+import pygame.freetype
 
 SIZE = 1000
 DISPLAY_WIDTH = 1.5 * SIZE
@@ -8,6 +9,7 @@ DISPLAY_DIMENSIONS = (DISPLAY_WIDTH, DISPLAY_HEIGHT)
 PADDLE_HEIGHT = SIZE / 5
 PADDLE_WIDTH = PADDLE_HEIGHT / 8
 BALL_SIZE = PADDLE_WIDTH
+FONT_SIZE = PADDLE_HEIGHT
 
 START_COORDS_BALL = (DISPLAY_WIDTH / 2  - BALL_SIZE, SIZE / 2 - BALL_SIZE)
 START_COORDS_LEFT = (0, SIZE / 2 - PADDLE_HEIGHT / 2)
@@ -21,6 +23,7 @@ DOWN = 1
 
 MOVEMENT_RATE = PADDLE_HEIGHT / 12
 BALL_SPEED_LIMIT = MOVEMENT_RATE
+BALL_MOVEMENT_START = (5, 5)
 SPEED_INCREASE_RATE = 1.5 # Rate at which ball increases speed when rebounds of paddle
 FPS = 60
 
@@ -42,7 +45,11 @@ class Player():
 class Ball():
     def __init__(self, position):
         self.position = position
-        self.direction = (5, 5)
+        self.direction = BALL_MOVEMENT_START
+    
+    def reset(self):
+        self.position = START_COORDS_BALL
+        self.direction = BALL_MOVEMENT_START
     
     def move(self, player_left, player_right):
         curr_x, curr_y = self.position
@@ -63,19 +70,28 @@ class Ball():
             if paddle_right_y <= curr_y <= paddle_right_y + PADDLE_HEIGHT or paddle_right_y <= curr_y + BALL_SIZE <= paddle_right_y + PADDLE_HEIGHT:
                 move_x = -1 * move_x
                 move_x, move_y = speed_up(move_x, move_y)
-            # Deal with losing point here
+            else:
+                player_left.score += 1
+                self.reset()
+                sleep(0.5)
+                return
+
         elif curr_x <= PADDLE_WIDTH:
             paddle_left_y = player_left.position[1]
             if paddle_left_y <= curr_y <= paddle_left_y + PADDLE_HEIGHT or paddle_left_y <= curr_y + BALL_SIZE <= paddle_left_y + PADDLE_HEIGHT:
                 move_x = -1 * move_x
                 move_x, move_y = speed_up(move_x, move_y)
-            # Deal with losing point here
-        else:
-            new_x = curr_x + move_x
+            else:
+                player_right.score += 1
+                self.reset()
+                sleep(0.5)
+                return
+
+        new_x = curr_x + move_x
 
 
         self.direction = (move_x, move_y)
-        self.position = (curr_x + move_x, new_y)
+        self.position = (new_x, new_y)
 
 
 def speed_up(move_x, move_y):
@@ -94,8 +110,10 @@ clock = pygame.time.Clock()
 
 # initialize all imported pygame modules
 pygame.init()
+pygame.font.init()
 
 win = pygame.display.set_mode(DISPLAY_DIMENSIONS)
+font = pygame.freetype.SysFont('Sans', FONT_SIZE)
 pygame.display.set_caption("Pong")
 win.fill(DISPLAY_COLOUR)
 pygame.display.update()
@@ -123,6 +141,10 @@ while cont:
         player_left.move(DOWN)
 
     win.fill(DISPLAY_COLOUR)
+    text_left_score, _ = font.render(f'{player_left.score}', GAME_COLOUR)
+    text_right_score, _ = font.render(f'{player_right.score}', GAME_COLOUR)
+    win.blit(text_left_score, (DISPLAY_WIDTH / 4, 0))
+    win.blit(text_right_score, (3 * DISPLAY_WIDTH / 4, 0))
     pygame.draw.rect(win, GAME_COLOUR, (*player_left.position, PADDLE_WIDTH, PADDLE_HEIGHT))
     pygame.draw.rect(win, GAME_COLOUR, (*player_right.position, PADDLE_WIDTH, PADDLE_HEIGHT))
     pygame.draw.rect(win, GAME_COLOUR, (*ball.position, BALL_SIZE, BALL_SIZE))

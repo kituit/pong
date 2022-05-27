@@ -119,7 +119,7 @@ class Game():
 
         self.win = pygame.display.set_mode(DISPLAY_DIMENSIONS)
         self.font = pygame.freetype.SysFont('Sans', FONT_SIZE)
-        icon = pygame.image.load('img/Pong1-1200x900.jpg')
+        icon = pygame.image.load('img/Icon.jpg')
         pygame.display.set_icon(icon)
         pygame.display.set_caption("Pong")
         self.win.fill(DISPLAY_COLOUR)
